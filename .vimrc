@@ -60,7 +60,6 @@ set history=500
 set autoread
 let mapleader = ","
 nmap <leader>w :w!<cr>
-nnoremap <Leader>f :set nomore<Bar>:ls<Bar>:set more<CR>:b<Space>
 set backspace=eol,start,indent
 set whichwrap+=<,>,h,l
 set ignorecase
@@ -93,7 +92,7 @@ xnoremap <expr> Y (v:register ==# '"' ? '"+' : '') . 'Y'
 
 
 if has("persistent_undo")
-	set undodir=~/.undodir/
+	set undodir=$HOME/.undodir/
 	set undofile
 endif
 
@@ -119,16 +118,34 @@ let g:gist_detect_filetype = 1
 
 let g:netrw_banner=0
 
-let g:black_linelength = 79
-
+" Startify don't change working dir. Also makes startify smart and change to
+" vcs root
+let g:startify_change_to_dir = 0
+let g:startify_change_to_vcs_root = 1
 
 " COC
+let g:coc_disable_startup_warning = 1
+autocmd FileType python let b:coc_root_patterns = ['.git', '.env']
 command! -nargs=0 Format :call CocAction('format')
 " Remap keys for gotos
 nmap <silent> gd <Plug>(coc-definition)
 nmap <silent> gy <Plug>(coc-type-definition)
 nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
+
+" rename symbol
+nmap <leader>rn <Plug>(coc-rename)
+
+" Format selection
+xmap <leader>f  <Plug>(coc-format-selected)
+nmap <leader>f  <Plug>(coc-format-selected)
+
+" Use `[g` and `]g` to navigate diagnostics
+" Use `:CocDiagnostics` to get all diagnostics of current buffer in location list.
+nmap <silent> [g <Plug>(coc-diagnostic-prev)
+nmap <silent> ]g <Plug>(coc-diagnostic-next)
+
+set statusline^=%{coc#status()}
 
 inoremap <silent><expr> <c-space> coc#refresh()
 
@@ -137,6 +154,24 @@ nnoremap <silent> <C-p> :Files<CR>
 autocmd! FileType fzf
 autocmd  FileType fzf set laststatus=0 noshowmode noruler
   \| autocmd BufLeave <buffer> set laststatus=2 showmode ruler
+
+" FZF related configs.
+
+" vim-fzf custom command passing options to Ag. If called with ! (Bang), then
+" show fzf with preview of the file itself.
+function! s:ag_with_opts(arg, bang)
+  let tokens  = split(a:arg)
+  let ag_opts = join(filter(copy(tokens), 'v:val =~ "^-"'))
+  let query   = join(filter(copy(tokens), 'v:val !~ "^-"'))
+  call fzf#vim#ag(query, ag_opts, a:bang ? fzf#vim#with_preview('right:40%') : {'down': '40%'})
+endfunction
+
+autocmd VimEnter * command! -nargs=* -bang Ag call s:ag_with_opts(<q-args>, 1)
+
+
+
+let g:fzf_buffers_jump = 1
+nmap <C-b> :Buffers<CR>
 
 let g:fzf_colors =
 \ { 'fg':      ['fg', 'Normal'],
