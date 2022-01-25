@@ -6,6 +6,7 @@ call plug#begin('~/.vim')
 
 Plug 'mbbill/undotree'
 Plug 'tpope/vim-fugitive'
+Plug 'tpop/vim-unimpaired'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'ngemily/vim-vp4'
@@ -17,8 +18,10 @@ Plug 'mhinz/vim-startify'
 Plug 'junegunn/fzf'
 Plug 'junegunn/fzf.vim'
 Plug 'ryanoasis/vim-devicons'
+Plug 'cjuniet/clang-format.vim'
+Plug 'tpope/vim-sleuth'
 Plug 'iCyMind/NeoSolarized'
-Plug 'neoclide/coc.nvim', {'branch': 'release'}
+Plug 'neoclide/coc.nvim', { 'branch': 'release', 'do': 'yarn install --frozen-lockfile' }
 
 call plug#end()            " required
 filetype plugin indent on    " required
@@ -61,7 +64,6 @@ set autoread
 let mapleader = ","
 nmap <leader>w :w!<cr>
 set backspace=eol,start,indent
-set whichwrap+=<,>,h,l
 set ignorecase
 set smartcase
 set hlsearch
@@ -71,9 +73,6 @@ set textwidth=0
 set colorcolumn=80
 set noerrorbells
 set novisualbell
-set shiftwidth=4
-set expandtab
-set tabstop=4
 set nowrap
 set splitright
 set termguicolors
@@ -96,9 +95,6 @@ if has("persistent_undo")
 	set undofile
 endif
 
-autocmd Filetype xml setlocal tabstop=2 shiftwidth=2
-autocmd Filetype xsd setlocal tabstop=2 shiftwidth=2
-
 set cmdheight=1
 set background=light
 colorscheme NeoSolarized
@@ -113,15 +109,11 @@ let g:airline_skip_empty_sections=1
 let g:airline_theme='solarized'
 
 let g:clang_format#auto_format = 0
+let g:clang_format#detect_style_file = 1
 
 let g:gist_detect_filetype = 1
 
 let g:netrw_banner=0
-
-" Startify don't change working dir. Also makes startify smart and change to
-" vcs root
-let g:startify_change_to_dir = 0
-let g:startify_change_to_vcs_root = 1
 
 " COC
 let g:coc_disable_startup_warning = 1
@@ -133,12 +125,22 @@ nmap <silent> gy <Plug>(coc-type-definition)
 nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
 
+" Use K to show documentation in preview window
+nnoremap <silent> K :call <SID>show_documentation()<CR>
+
+function! s:show_documentation()
+  if (index(['vim','help'], &filetype) >= 0)
+    execute 'h '.expand('<cword>')
+  else
+    call CocAction('doHover')
+  endif
+endfunction
+
 " rename symbol
 nmap <leader>rn <Plug>(coc-rename)
 
-" Format selection
-xmap <leader>f  <Plug>(coc-format-selected)
-nmap <leader>f  <Plug>(coc-format-selected)
+" Format file
+nnoremap <leader>f  :Format<CR>
 
 " Use `[g` and `]g` to navigate diagnostics
 " Use `:CocDiagnostics` to get all diagnostics of current buffer in location list.
@@ -148,6 +150,12 @@ nmap <silent> ]g <Plug>(coc-diagnostic-next)
 set statusline^=%{coc#status()}
 
 inoremap <silent><expr> <c-space> coc#refresh()
+
+let g:fzf_action = {
+  \ 'ctrl-t': 'tab split',
+  \ 'ctrl-x': 'split',
+  \ 'ctrl-v': 'vsplit',
+  \ 'ctrl-y': {lines -> setreg('*', join(lines, "\n"))}}
 
 nnoremap <silent> <C-p> :Files<CR>
 
@@ -167,8 +175,6 @@ function! s:ag_with_opts(arg, bang)
 endfunction
 
 autocmd VimEnter * command! -nargs=* -bang Ag call s:ag_with_opts(<q-args>, 1)
-
-
 
 let g:fzf_buffers_jump = 1
 nmap <C-b> :Buffers<CR>
